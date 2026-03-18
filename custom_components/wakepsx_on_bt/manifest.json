@@ -3,7 +3,7 @@
   "name": "Wake a PlayStation (Ps3, Ps4, Ps5) over BlueTooth",
   "documentation": "https://github.com/amasolov/wakepsx_on_bt-ha/blob/master/README.md",
   "issue_tracker": "https://github.com/amasolov/wakepsx_on_bt-ha/issues",
-  "requirements": ["pywakepsXonbt>=0.1.2"],
+  "requirements": ["pywakepsXonbt @ git+https://github.com/amasolov/pywakepsXonbt.git@master"],
   "dependencies": [],
   "integration_type": "device",
   "iot_class": "assumed_state",
