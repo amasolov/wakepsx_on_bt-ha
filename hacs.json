@@ -1,0 +1,5 @@
+{
+  "name": "Wake PlayStation on Bluetooth",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}

@@ -20,7 +20,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.script import Script
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 
@@ -36,6 +35,7 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
     }
 )
 
+
 def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -43,60 +43,48 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up a wake psx on bt switch."""
-    adapter: str | None = config.get(CONF_ADAPTER)
-    dsbt_address: int | None = config.get(CONF_CONTROLER_BT_ADDRESS)
-    psxbt_address: str | None = config.get(CONF_PLAYSTATION_BT_ADDRESS)
-    name: str | None = config.get(CONF_NAME)
+    adapter: str = config[CONF_ADAPTER]
+    dsbt_address: str = config[CONF_CONTROLER_BT_ADDRESS]
+    psxbt_address: str = config[CONF_PLAYSTATION_BT_ADDRESS]
+    name: str = config[CONF_NAME]
     add_entities(
-        [
-            WOBTPSXSwitch(
-                hass,
-                adapter,
-                psxbt_address,
-                dsbt_address,
-                name
-            )
-        ],
-        False
+        [WOBTPSXSwitch(hass, adapter, psxbt_address, dsbt_address, name)],
+        False,
     )
+
 
 class WOBTPSXSwitch(SwitchEntity):
     """Representation of a wakepsx on bt switch."""
 
-    def __init__(self,
-                 hass: HomeAssistant,
-                 adapter: str,
-                 psxbt_address: str,
-                 dsbt_address: str,
-                 name: str | None = None,
+    _attr_assumed_state = True
+    _attr_should_poll = False
+    _attr_icon = "mdi:sony-playstation"
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        adapter: str,
+        psxbt_address: str,
+        dsbt_address: str,
+        name: str | None = None,
     ) -> None:
-        """Initialize the WOL switch."""
+        """Initialize the wake PsX on BT switch."""
         self._hass = hass
         self._adapter = adapter
         self._psxbt_address = psxbt_address
         self._dsbt_address = dsbt_address
-        self._state = False  # always False, we can not know
-        if name is None or not name :
-            self._attr_name = WOBTPSX_PREFIX + dr.format_mac(self._psxbt_address)
-        else:
-            self._attr_name = name
-        self._attr_unique_id = WOBTPSX_PREFIX + dr.format_mac(self._psxbt_address)
-        self._attr_assumed_state = False
-        self._attr_should_poll = False
-        self._attr_icon = "mdi:sony-playstation"
-        
+        self._state = False
+        formatted_mac = dr.format_mac(self._psxbt_address)
+        self._attr_name = name if name else WOBTPSX_PREFIX + formatted_mac
+        self._attr_unique_id = WOBTPSX_PREFIX + formatted_mac
+
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return true if switch is on."""
         return self._state
 
-    @property
-    def name(self):
-        """Return the name of the switch."""
-        return self._attr_name
-
-    def turn_on(self, **kwargs):
-        """Turn the device on."""
+    def turn_on(self, **kwargs) -> None:
+        """Send BT wake packet to the PlayStation."""
         self._hass.services.call(
             DOMAIN,
             SERVICE_SEND_MAGIC_PACKET,
@@ -107,10 +95,5 @@ class WOBTPSXSwitch(SwitchEntity):
             },
         )
 
-    def turn_off(self, **kwargs):
-        """Bt can not turn off PsX."""
-        return
-
-    def update(self):
-        """No way to check (yet)."""
-        return
+    def turn_off(self, **kwargs) -> None:
+        """No-op: Bluetooth cannot turn off a PlayStation."""
